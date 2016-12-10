@@ -30,6 +30,8 @@ import hashlib
 import mimetypes
 import re
 
+from database import BackingPhotoTable
+
 # Shotwell's orientation enum
 TOP_LEFT = 1
 TOP_RIGHT = 2
@@ -116,6 +118,7 @@ def import_photos(iphoto_dir, shotwell_db, photos_dir):
         _log.error("Shotwell DB not found at %s", shotwell_db)
         sys.exit(2)
     db = sqlite3.connect(shotwell_db) #@UndefinedVariable
+    backingPhotoTable = BackingPhotoTable(db)
     with db:
         cursor = db.execute("SELECT schema_version from VersionTable;")
         schema_version = cursor.fetchone()[0]
@@ -327,16 +330,6 @@ def import_photos(iphoto_dir, shotwell_db, photos_dir):
         
             
         for key, photo in photos.items():
-            # The BackingPhotoTable
-#                  id = 1
-#            filepath = /home/shaun/Pictures/Photos/2008/03/24/DSCN2416 (Modified (2))_modified.JPG
-#           timestamp = 1348968706
-#            filesize = 1064375
-#               width = 1600
-#              height = 1200
-#original_orientation = 1
-#         file_format = 0
-#        time_created = 1348945103
             if "event_id" not in photo:
                 _log.error("Photo didn't have an event: %s", photo)
                 skipped.append(photo["orig_image_path"])
@@ -344,26 +337,8 @@ def import_photos(iphoto_dir, shotwell_db, photos_dir):
             editable_id = -1
             if photo["mod_image_path"] is not None:
                 # This photo has a backing image
-                c = db.execute("""
-                    INSERT INTO BackingPhotoTable (filepath,
-                                                   timestamp,
-                                                   filesize,
-                                                   width,
-                                                   height,
-                                                   original_orientation,
-                                                   file_format,
-                                                   time_created)
-                    VALUES (:new_mod_path,
-                            :mod_timestamp,
-                            :mod_file_size,
-                            :mod_width,
-                            :mod_height,
-                            :mod_original_orientation,
-                            :file_format,
-                            :time_created)
-                """, photo)
-                editable_id = c.lastrowid
-            
+                editable_id = backingPhotoTable.insert(photo)
+
             photo["editable_id"] = editable_id
             try:
                 c = db.execute("""
