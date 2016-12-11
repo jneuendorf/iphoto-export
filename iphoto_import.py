@@ -26,13 +26,14 @@ import plistlib
 import datetime
 from PIL import Image #@UnresolvedImport
 from pyexiv2.metadata import ImageMetadata
-import hashlib
 import mimetypes
 import re
 
 from database import BackingPhotoTable
+from fs import FileSystem
 
 # Shotwell's orientation enum
+
 TOP_LEFT = 1
 TOP_RIGHT = 2
 BOTTOM_RIGHT = 3
@@ -71,41 +72,13 @@ def exif_datetime_to_time(dt):
     
     return int(time.mktime(dt.timetuple()))
 
-def md5_for_file(filename, block_size=2**20):
-    with open(filename, "rb") as f:
-        md5 = hashlib.md5()
-        while True:
-            data = f.read(block_size)
-            if not data:
-                break
-            md5.update(data)
-    return md5.hexdigest()
-
-def is_file_same(f1, f2):
-    return os.path.samefile(f1, f2) or md5_for_file(f1) == md5_for_file(f2)
-
-def safe_link_file(src, dst):
-    assert os.path.exists(src), "%s didn't exist" % src
-    if os.path.exists(dst):
-        if is_file_same(src, dst):
-            # Nothing to do
-            return
-        else:
-            raise Exception("Destination file %s exists and not equal to %s" % (dst, src))
-    else:
-        # Try to link the file
-        try:
-            os.makedirs(os.path.dirname(dst))
-        except Exception:
-            pass
-        try:
-            os.link(src, dst)
-        except:
-            _log.debug("Hard link failed, falling back on copy")
-            shutil.copy(src, dst)
-            
-
-def import_photos(iphoto_dir, shotwell_db, photos_dir):
+def import_photos(iphoto_dir, shotwell_db, photos_dir, force_copy):
+    _log.debug("Arguments")
+    _log.debug("\t- iPhoto dir   : %s", iphoto_dir)
+    _log.debug("\t- Shotwell db  : %s", shotwell_db)
+    _log.debug("\t- Shotwell dir : %s", photos_dir)
+    _log.debug("\t- force copy   : %s", force_copy)
+    fs = FileSystem(force_copy)
     # Sanity check the iPhoto dir and Shotwell DB.
     _log.debug("Performing sanity checks on iPhoto and Shotwell DBs.")
     now = int(time.time())
@@ -219,7 +192,7 @@ def import_photos(iphoto_dir, shotwell_db, photos_dir):
             img = Image.open(orig_image_path)
             w, h = img.size
             
-            md5 = md5_for_file(orig_image_path)
+            md5 = fs.md5_for_file(orig_image_path)
             orig_timestamp = int(os.path.getmtime(orig_image_path))
             
             mod_w, mod_h, mod_md5, mod_timestamp = None, None, None, None
@@ -235,7 +208,7 @@ def import_photos(iphoto_dir, shotwell_db, photos_dir):
                     mod_file_size = None
                 else:
                     mod_w, mod_h = mod_img.size
-                    mod_md5 = md5_for_file(mod_image_path)
+                    mod_md5 = fs.md5_for_file(mod_image_path)
                     mod_timestamp = int(os.path.getmtime(mod_image_path))
             
             file_format = FILE_FORMAT.get(mime, -1)
@@ -397,7 +370,7 @@ def import_photos(iphoto_dir, shotwell_db, photos_dir):
         print >> sys.stderr, "%s file skipped (they will still be copied)" % len(skipped)
         
         for src, dst in copy_queue:
-            safe_link_file(src, dst)
+            fs.safe_link_file(src, dst)
         
         db.commit()
         # Commit the transaction.
@@ -419,7 +392,10 @@ if __name__ == '__main__':
     parser.add_argument('photos_dir', metavar='PHOTOS_DIR', type=str,
                        default=None, action='store', 
                        help='location of your photos dir')
+    parser.add_argument('--force-copy', dest='force_copy',
+                        action='store_true', help='Force image copy')
+
     args = parser.parse_args()
     
     logging.basicConfig(level=logging.DEBUG)
-    import_photos(args.iphoto_dir, args.shotwell_db, args.photos_dir)
+    import_photos(args.iphoto_dir, args.shotwell_db, args.photos_dir, args.force_copy)
