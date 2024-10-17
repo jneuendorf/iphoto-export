@@ -6,8 +6,8 @@ import logging
 
 logger = logging.getLogger("iphotoimport")
 
-class FileSystem:
 
+class FileSystem:
     def __init__(self, forceCopy):
         self.forceCopy = forceCopy
 
@@ -24,7 +24,9 @@ class FileSystem:
                 # Nothing to do
                 return
             else:
-                raise Exception("Destination file %s exists and not equal to %s" % (dst, src))
+                raise Exception(
+                    "Destination file %s exists and not equal to %s" % (dst, src)
+                )
         else:
             self.mkdir(dst)
             # Try to link the file
@@ -35,8 +37,9 @@ class FileSystem:
                 shutil.copy(src, dst)
 
     def is_file_same(self, f1, f2):
-        return os.path.samefile(f1, f2) or self.md5_for_file(f1) == self.md5_for_file(f2)
-
+        return os.path.samefile(f1, f2) or self.md5_for_file(f1) == self.md5_for_file(
+            f2
+        )
 
     def md5_for_file(self, filename, block_size=2**20):
         with open(filename, "rb") as f:
@@ -48,7 +51,7 @@ class FileSystem:
                 md5.update(data)
         return md5.hexdigest()
 
-    def mkdir(self,dir):
+    def mkdir(self, dir):
         try:
             os.makedirs(os.path.dirname(dir))
         except Exception:

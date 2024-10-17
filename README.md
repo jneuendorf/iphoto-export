@@ -4,9 +4,23 @@ This repository contains a script to import an iPhoto library into Shotwell.
 
 It preserves modified images using Shotwell's "open in external editor" 
 feature.  Images that you tweaked in iPhoto will appear to have been modified 
-in an external editor in Shotwell.  i.e. it will show the tweaked version by 
+in an external editor in Shotwell, i.e. it will show the tweaked version by 
 default and allow you to do non-destructive editing to the tweaked version
 or revert to the original and lose your iPhoto tweaks.
+
+Install
+=======
+
+### macOS
+
+```bash
+brew install boost-python3 exiv2
+CPATH="$(brew --prefix boost)/include:$(brew --prefix exiv2)/include" \
+LDFLAGS="-L$(brew --prefix boost-python3)/lib -L$(brew --prefix exiv2)/lib" \
+LIBRARY_PATH="$(brew --prefix exiv2)/lib:$LIBRARY_PATH" \
+poetry install
+```
+
 
 Usage
 =====
@@ -18,8 +32,8 @@ To use the script you will need to pass it
 * a destination path to copy photos to.  E.g. "~/Pictures/"
 
 The script will copy the photos using the directory hierarchy of the 
-iPhoto Library but within your selected pictures folder.  Note: the script will
-try to use a hard link rather than a copy if possible.  They means that the 
+iPhoto Library but within your selected pictures' folder. Note: the script will
+try to use a hard link rather than a copy if possible. This means that the 
 two paths will actually point at the same file.  This saves disk space but if
 you subsequently modify the file under iPhoto Library, it will affect the
 Shotwell copy too.

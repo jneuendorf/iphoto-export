@@ -9,13 +9,15 @@
 #         file_format = 0
 #        time_created = 1348945103
 
+
 class BackingPhotoTable:
     def __init__(self, db):
         self.db = db
         self.init()
 
     def insert(self, photo):
-        cursor = self.db.execute("""
+        cursor = self.db.execute(
+            """
                     INSERT INTO BackingPhotoTable (filepath,
                                                    timestamp,
                                                    filesize,
@@ -32,20 +34,25 @@ class BackingPhotoTable:
                             :mod_original_orientation,
                             :file_format,
                             :time_created)
-                """, photo)
+                """,
+            photo,
+        )
         return cursor.lastrowid
 
-
     def init(self):
-        cursor = self.db.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='BackingPhotoTable'")
-        if (cursor.fetchone()[0] == 0):
-            self.db.execute("CREATE TABLE BackingPhotoTable ("
-                                "id INTEGER PRIMARY KEY, "
-                                "filepath TEXT UNIQUE NOT NULL, "
-                                "timestamp INTEGER, filesize INTEGER, "
-                                "width INTEGER, "
-                                "height INTEGER, "
-                                "original_orientation INTEGER, "
-                                "file_format INTEGER, "
-                                "time_created INTEGER "
-                            ")")
+        cursor = self.db.execute(
+            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='BackingPhotoTable'"
+        )
+        if cursor.fetchone()[0] == 0:
+            self.db.execute(
+                "CREATE TABLE BackingPhotoTable ("
+                "id INTEGER PRIMARY KEY, "
+                "filepath TEXT UNIQUE NOT NULL, "
+                "timestamp INTEGER, filesize INTEGER, "
+                "width INTEGER, "
+                "height INTEGER, "
+                "original_orientation INTEGER, "
+                "file_format INTEGER, "
+                "time_created INTEGER "
+                ")"
+            )

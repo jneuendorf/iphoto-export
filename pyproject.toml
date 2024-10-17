@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "iphoto-export"
+version = "0.1.0"
+description = "A script to export photos from iPhoto"
+authors = ["Jim Neuendorf <jim.neuendorf@gmx.de>"]
+license = "GPL-3.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+#pyexiv2 = [
+#    {markers = "python_version == '3.11' and sys_platform == 'darwin' and platform_machine == 'arm64'", path = "pyexiv2-2.15.0-cp311-none-macosx_14_0_arm64.whl"},
+#    {markers = "python_version == '3.12' and sys_platform == 'darwin' and platform_machine == 'arm64'", path = "pyexiv2-2.15.0-cp312-none-macosx_14_0_arm64.whl"},
+#    {version = "^2.15.0"},
+#]
+py3exiv2 = "^0.12.0"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
